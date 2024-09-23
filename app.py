@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from transformers import pipeline
+from urllib.parse import quote as url_quote
 import threading
 
 # 創建 Flask 應用
