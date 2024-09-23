@@ -11,12 +11,13 @@ tokenizers==0.19.0
 torch
 torchvision
 
-# TensorFlow 支援，且明確 TensorFlow GPU 版本
-tensorflow-gpu==2.13.0  # 使用 TensorFlow GPU 版本，如果使用 GPU
+# 使用最新的 TensorFlow，內建 GPU 支援
+tensorflow==2.13.0
 
 # 安裝與 Transformers 相容的 tf-keras
 tf-keras  # 用於與 Transformers 兼容的 Keras 版本
 
 # 如果需要使用 CUDA 和 TensorRT 加速，增加如下
-nvidia-tensorrt  # TensorRT 庫
+nvidia-tensorrt  # TensorRT 庫（可選）
+
 
