@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)  # 啟用 CORS 允許跨域請求
 
 # 加載 Hugging Face 的情緒分析模型
-classifier = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+classifier = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment",use_fast=False)
 
 # 定義細分的情緒範疇
 def categorize_sentiment(label):
