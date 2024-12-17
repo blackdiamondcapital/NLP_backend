@@ -1,0 +1,128 @@
+import gradio as gr
+from transformers import pipeline
+
+# 加載 Hugging Face 的多語言情緒分析模型
+# 確保模型名稱正確並存在
+classifier = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+
+# 定義細分的情緒範疇
+def categorize_sentiment(label):
+    if label in ['1 star', '2 stars']:
+        return 'Negative'
+    elif label == '3 stars':
+        return 'Neutral'
+    elif label in ['4 stars', '5 stars']:
+        return 'Positive'
+    else:
+        return 'Unknown'
+
+# 定義分析函數
+def analyze_text(text):
+    if not text.strip():
+        return {"error": "未提供文本。請輸入要分析的文本。"}
+
+    try:
+        # 使用 Hugging Face 模型進行情緒分析
+        results = classifier(text)
+        if isinstance(results, list) and len(results) > 0:
+            result = results[0]
+            sentiment_label = result['label']
+            confidence = result['score']
+
+            # 將模型的星級轉換為細分情緒
+            sentiment = categorize_sentiment(sentiment_label)
+
+            # 返回分析結果
+            return {
+                'sentiment': sentiment,
+                'sentiment_label': sentiment_label,  # 返回原始標籤
+                'confidence': f"{confidence*100:.2f}%"
+            }
+        else:
+            return {'error': '模型返回無效的結果。'}
+    except Exception as e:
+        # 處理異常情況
+        return {'error': f"分析過程中出錯: {str(e)}"}
+
+# 定義 Gradio 的介面
+with gr.Blocks(css="""
+    body, .gradio-container, .block-container {
+        background-color: white;
+    }
+    .markdown p, .markdown h1, .markdown h2, .markdown h3, .markdown h4, .markdown h5, .markdown h6 {
+        color: black;
+    }
+    .gr-button {
+        background-color: #4CAF50 !important;
+        color: white !important;
+    }
+    .gr-textbox, .gr-button, .gr-dropdown, .gr-slider {
+        font-size: 16px;
+    }
+""") as demo:
+    gr.Markdown("# 中文情緒分析")
+    gr.Markdown("""
+    使用 Hugging Face 的多語言情緒分析模型，將輸入的文本分類為 **Positive**, **Neutral** 或 **Negative**。
+    """)
+
+    with gr.Row():
+        input_text = gr.Textbox(
+            label="輸入要分析的文本",
+            lines=6,
+            placeholder="在此輸入文本...",
+            interactive=True
+        )
+
+    with gr.Row():
+        output_sentiment = gr.Textbox(
+            label="情緒",
+            interactive=False,
+            placeholder="情緒將顯示在此處"
+        )
+        output_label = gr.Textbox(
+            label="情緒標籤",
+            interactive=False,
+            placeholder="情緒標籤將顯示在此處"
+        )
+        output_confidence = gr.Textbox(
+            label="信心度",
+            interactive=False,
+            placeholder="信心度將顯示在此處"
+        )
+
+    with gr.Row():
+        analyze_button = gr.Button("分析")
+
+    with gr.Row():
+        error_output = gr.Textbox(
+            label="錯誤",
+            visible=False,
+            interactive=False,
+            placeholder="錯誤信息將顯示在此處"
+        )
+
+    def process(text):
+        result = analyze_text(text)
+        if 'error' in result:
+            return {"情緒": "", "情緒標籤": "", "信心度": "", "錯誤": result['error']}
+        else:
+            return {
+                "情緒": result['sentiment'],
+                "情緒標籤": result['sentiment_label'],
+                "信心度": result['confidence'],
+                "錯誤": ""
+            }
+
+    analyze_button.click(
+        fn=process,
+        inputs=input_text,
+        outputs=[output_sentiment, output_label, output_confidence, error_output]
+    )
+
+    gr.Markdown("""
+    ---
+    **注意**: 此應用使用 Hugging Face 的 `nlptown/bert-base-multilingual-uncased-sentiment` 模型。該模型基於1到5星的評分提供情緒分析。
+    """)
+
+# 啟動 Gradio 應用
+demo.launch()
